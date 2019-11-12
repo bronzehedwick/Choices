@@ -59,12 +59,6 @@ export const wrap = (element, wrapper = document.createElement('div')) => {
 };
 
 /**
- * @param {HTMLElement} el
- * @param {string} attr
- */
-export const findAncestorByAttrName = (el, attr) => el.closest(`[${attr}]`);
-
-/**
  * @param {Element} startEl
  * @param {string} selector
  * @param {1 | -1} direction
@@ -89,8 +83,8 @@ export const getAdjacentEl = (startEl, selector, direction = 1) => {
 };
 
 /**
- * @param {HTMLElement} element
- * @param {HTMLElement} parent
+ * @param {Element} element
+ * @param {Element} parent
  * @param {-1 | 1} direction
  * @returns {boolean}
  */
@@ -131,7 +125,7 @@ export const sanitise = value => {
 };
 
 /**
- * @returns {function}
+ * @returns {() => (str: string) => Element}
  */
 export const strToEl = (() => {
   const tmpEl = document.createElement('div');
@@ -184,13 +178,6 @@ export const dispatchEvent = (element, type, customArgs = null) => {
 
   return element.dispatchEvent(event);
 };
-
-/**
- * @param {string} userAgent
- * @returns {boolean}
- */
-export const isIE11 = userAgent =>
-  !!(userAgent.match(/Trident/) && userAgent.match(/rv[ :]11/));
 
 /**
  * @param {array} array

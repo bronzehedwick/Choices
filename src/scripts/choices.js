@@ -36,12 +36,15 @@ import {
   strToEl,
   sortByScore,
   generateId,
-  findAncestorByAttrName,
-  isIE11,
   existsInArray,
   cloneObject,
   diff,
 } from './lib/utils';
+
+/** @see {@link http://browserhacks.com/#hack-acea075d0ac6954f275a70023906050c} */
+const IS_IE11 =
+  '-ms-scroll-limit' in document.documentElement.style &&
+  '-ms-ime-align' in document.documentElement.style;
 
 /**
  * @typedef {import('../../types/index').Choices.Choice} Choice
@@ -611,13 +614,13 @@ class Choices {
 
     this.containerOuter.removeLoadingState();
 
-    this._setLoading(true);
+    this._startLoading();
 
     choicesArrayOrFetcher.forEach(groupOrChoice => {
       if (groupOrChoice.choices) {
         this._addGroup({
+          id: parseInt(groupOrChoice.id, 10) || null,
           group: groupOrChoice,
-          id: groupOrChoice.id || null,
           valueKey: value,
           labelKey: label,
         });
@@ -633,7 +636,7 @@ class Choices {
       }
     });
 
-    this._setLoading(false);
+    this._stopLoading();
 
     return this;
   }
@@ -1073,8 +1076,12 @@ class Choices {
     }
   }
 
-  _setLoading(isLoading) {
-    this._store.dispatch(setIsLoading(isLoading));
+  _startLoading() {
+    this._store.dispatch(setIsLoading(true));
+  }
+
+  _stopLoading() {
+    this._store.dispatch(setIsLoading(false));
   }
 
   _handleLoadingState(setLoading = true) {
@@ -1222,16 +1229,24 @@ class Choices {
     const { documentElement } = document;
 
     // capture events - can cancel event processing or propagation
-    documentElement.addEventListener('keydown', this._onKeyDown, true);
     documentElement.addEventListener('touchend', this._onTouchEnd, true);
-    documentElement.addEventListener('mousedown', this._onMouseDown, true);
+    this.containerOuter.element.addEventListener(
+      'keydown',
+      this._onKeyDown,
+      true,
+    );
+    this.containerOuter.element.addEventListener(
+      'mousedown',
+      this._onMouseDown,
+      true,
+    );
 
     // passive events - doesn't call `preventDefault` or `stopPropagation`
     documentElement.addEventListener('click', this._onClick, { passive: true });
     documentElement.addEventListener('touchmove', this._onTouchMove, {
       passive: true,
     });
-    documentElement.addEventListener('mouseover', this._onMouseOver, {
+    this.dropdown.element.addEventListener('mouseover', this._onMouseOver, {
       passive: true,
     });
 
@@ -1267,55 +1282,45 @@ class Choices {
   _removeEventListeners() {
     const { documentElement } = document;
 
-    documentElement.removeEventListener('keydown', this._onKeyDown, true);
     documentElement.removeEventListener('touchend', this._onTouchEnd, true);
-    documentElement.removeEventListener('mousedown', this._onMouseDown, true);
+    this.containerOuter.element.removeEventListener(
+      'keydown',
+      this._onKeyDown,
+      true,
+    );
+    this.containerOuter.element.removeEventListener(
+      'mousedown',
+      this._onMouseDown,
+      true,
+    );
 
-    documentElement.removeEventListener('keyup', this._onKeyUp, {
-      passive: true,
-    });
-    documentElement.removeEventListener('click', this._onClick, {
-      passive: true,
-    });
-    documentElement.removeEventListener('touchmove', this._onTouchMove, {
-      passive: true,
-    });
-    documentElement.removeEventListener('mouseover', this._onMouseOver, {
-      passive: true,
-    });
+    documentElement.removeEventListener('click', this._onClick);
+    documentElement.removeEventListener('touchmove', this._onTouchMove);
+    this.dropdown.element.removeEventListener('mouseover', this._onMouseOver);
 
     if (this._isSelectOneElement) {
-      this.containerOuter.element.removeEventListener('focus', this._onFocus, {
-        passive: true,
-      });
-      this.containerOuter.element.removeEventListener('blur', this._onBlur, {
-        passive: true,
-      });
+      this.containerOuter.element.removeEventListener('focus', this._onFocus);
+      this.containerOuter.element.removeEventListener('blur', this._onBlur);
     }
 
-    this.input.element.removeEventListener('focus', this._onFocus, {
-      passive: true,
-    });
-    this.input.element.removeEventListener('blur', this._onBlur, {
-      passive: true,
-    });
+    this.input.element.removeEventListener('keyup', this._onKeyUp);
+    this.input.element.removeEventListener('focus', this._onFocus);
+    this.input.element.removeEventListener('blur', this._onBlur);
 
     if (this.input.element.form) {
-      this.input.element.form.removeEventListener('reset', this._onFormReset, {
-        passive: true,
-      });
+      this.input.element.form.removeEventListener('reset', this._onFormReset);
     }
 
     this.input.removeEventListeners();
   }
 
+  /**
+   * @param {KeyboardEvent} event
+   */
   _onKeyDown(event) {
     const { target, keyCode, ctrlKey, metaKey } = event;
 
-    if (
-      target !== this.input.element &&
-      !this.containerOuter.element.contains(target)
-    ) {
+    if (target !== this.input.element) {
       return;
     }
 
@@ -1572,47 +1577,55 @@ class Choices {
     this._wasTap = true;
   }
 
+  /**
+   * Handles mousedown event in capture mode for containetOuter.element
+   * @param {MouseEvent} event
+   */
   _onMouseDown(event) {
-    const { target, shiftKey } = event;
-    // If we have our mouse down on the scrollbar and are on IE11...
-    if (
-      this.choiceList.element.contains(target) &&
-      isIE11(navigator.userAgent)
-    ) {
-      this._isScrollingOnIe = true;
-    }
-
-    if (
-      !this.containerOuter.element.contains(target) ||
-      target === this.input.element
-    ) {
+    const { target } = event;
+    if (!(target instanceof HTMLElement)) {
       return;
     }
 
-    const { activeItems } = this._store;
-    const hasShiftKey = shiftKey;
-    const buttonTarget = findAncestorByAttrName(target, 'data-button');
-    const itemTarget = findAncestorByAttrName(target, 'data-item');
-    const choiceTarget = findAncestorByAttrName(target, 'data-choice');
-
-    if (buttonTarget) {
-      this._handleButtonAction(activeItems, buttonTarget);
-    } else if (itemTarget) {
-      this._handleItemAction(activeItems, itemTarget, hasShiftKey);
-    } else if (choiceTarget) {
-      this._handleChoiceAction(activeItems, choiceTarget);
+    // If we have our mouse down on the scrollbar and are on IE11...
+    if (IS_IE11 && this.choiceList.element.contains(target)) {
+      // check if click was on a scrollbar area
+      const firstChoice = /** @type {HTMLElement} */ (this.choiceList.element
+        .firstElementChild);
+      const isOnScrollbar =
+        this._direction === 'ltr'
+          ? event.offsetX >= firstChoice.offsetWidth
+          : event.offsetX < firstChoice.offsetLeft;
+      this._isScrollingOnIe = isOnScrollbar;
     }
 
+    if (target === this.input.element) {
+      return;
+    }
+
+    const item = target.closest('[data-button],[data-item],[data-choice]');
+    if (item instanceof HTMLElement) {
+      const hasShiftKey = event.shiftKey;
+      const { activeItems } = this._store;
+      const { dataset } = item;
+
+      if ('button' in dataset) {
+        this._handleButtonAction(activeItems, item);
+      } else if ('item' in dataset) {
+        this._handleItemAction(activeItems, item, hasShiftKey);
+      } else if ('choice' in dataset) {
+        this._handleChoiceAction(activeItems, item);
+      }
+    }
     event.preventDefault();
   }
 
+  /**
+   * Handles mouseover event over this.dropdown
+   * @param {MouseEvent} event
+   */
   _onMouseOver({ target }) {
-    const targetWithinDropdown =
-      target === this.dropdown || this.dropdown.element.contains(target);
-    const shouldHighlightChoice =
-      targetWithinDropdown && target.hasAttribute('data-choice');
-
-    if (shouldHighlightChoice) {
+    if (target instanceof HTMLElement && 'choice' in target.dataset) {
       this._highlightChoice(target);
     }
   }
@@ -1801,7 +1814,7 @@ class Choices {
     const passedCustomProperties = customProperties;
     const { items } = this._store;
     const passedLabel = label || passedValue;
-    const passedOptionId = parseInt(choiceId, 10) || -1;
+    const passedOptionId = choiceId || -1;
     const group = groupId >= 0 ? this._store.getGroupById(groupId) : null;
     const id = items ? items.length + 1 : 1;
 
@@ -1895,12 +1908,12 @@ class Choices {
 
     this._store.dispatch(
       addChoice({
-        value,
-        label: choiceLabel,
         id: choiceId,
         groupId,
-        disabled: isDisabled,
         elementId: choiceElementId,
+        value,
+        label: choiceLabel,
+        disabled: isDisabled,
         customProperties,
         placeholder,
         keyCode,
@@ -2067,7 +2080,7 @@ class Choices {
     if (this._isSelectElement) {
       this._highlightPosition = 0;
       this._isSearching = false;
-      this._setLoading(true);
+      this._startLoading();
 
       if (this._presetGroups.length) {
         this._addPredefinedGroups(this._presetGroups);
@@ -2075,7 +2088,7 @@ class Choices {
         this._addPredefinedChoices(this._presetChoices);
       }
 
-      this._setLoading(false);
+      this._stopLoading();
     }
 
     if (this._isTextElement) {
@@ -2113,13 +2126,11 @@ class Choices {
       choices.sort(this.config.sorter);
     }
 
-    // Determine whether there is a selected choice
     const hasSelectedChoice = choices.some(choice => choice.selected);
     const firstEnabledChoiceIndex = choices.findIndex(
-      _choice => _choice.disabled === undefined || !_choice.disabled,
+      choice => choice.disabled === undefined || !choice.disabled,
     );
 
-    // Add each choice
     choices.forEach((choice, index) => {
       const { value, label, customProperties, placeholder } = choice;
 
