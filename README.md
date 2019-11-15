@@ -147,6 +147,7 @@ Or include Choices directly:
       openState: 'is-open',
       disabledState: 'is-disabled',
       highlightedState: 'is-highlighted',
+      selectedState: 'is-selected',
       flippedState: 'is-flipped',
       loadingState: 'is-loading',
       noResults: 'has-no-results',
@@ -578,6 +579,7 @@ classNames: {
   openState: 'is-open',
   disabledState: 'is-disabled',
   highlightedState: 'is-highlighted',
+  selectedState: 'is-selected',
   flippedState: 'is-flipped',
   selectedState: 'is-highlighted',
 }
@@ -1061,7 +1063,7 @@ Element.prototype.closest
 
 ## Development
 
-To setup a local environment: clone this repo, navigate into it's directory in a terminal window and run the following command:
+To setup a local environment: clone this repo, navigate into its directory in a terminal window and run the following command:
 
 `npm install`
 
