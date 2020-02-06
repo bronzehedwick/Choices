@@ -45,13 +45,27 @@ From a [CDN](https://www.jsdelivr.com/package/npm/choices.js):
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/base.min.css"
 />
+<!-- Or versioned -->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/styles/base.min.css"
+/>
+
 <!-- Include Choices CSS -->
 <link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
 />
-<!-- Include Choices JavaScript -->
+<!-- Or versioned -->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/styles/choices.min.css"
+/>
+
+<!-- Include Choices JavaScript (latest) -->
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<!-- Or versioned -->
+<script src="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/scripts/choices.min.js"></script>
 ```
 
 Or include Choices directly:
@@ -302,7 +316,7 @@ Pass an array of objects:
 
 **Input types affected:** `text`
 
-**Usage:** What divides each value. The default delimiter seperates each value with a comma: `"Value 1, Value 2, Value 3"`.
+**Usage:** What divides each value. The default delimiter separates each value with a comma: `"Value 1, Value 2, Value 3"`.
 
 ### paste
 
@@ -453,7 +467,7 @@ For backward compatibility, `<option placeholder>This is a placeholder</option>`
 
 **Type:** `String` **Default:** `null`
 
-**Input types affected:** `text`, `select-multiple`
+**Input types affected:** `text`
 
 **Usage:** The value of the inputs placeholder.
 
@@ -707,7 +721,7 @@ example.passedElement.element.addEventListener(
 
 ### addItem
 
-**Arguments:** `id, value, label, groupValue, keyCode`
+**Payload:** `id, value, label, customProperties, groupValue, keyCode`
 
 **Input types affected:** `text`, `select-one`, `select-multiple`
 
@@ -715,7 +729,7 @@ example.passedElement.element.addEventListener(
 
 ### removeItem
 
-**Arguments:** `id, value, label, groupValue`
+**Payload:** `id, value, label, customProperties, groupValue`
 
 **Input types affected:** `text`, `select-one`, `select-multiple`
 
@@ -723,7 +737,7 @@ example.passedElement.element.addEventListener(
 
 ### highlightItem
 
-**Arguments:** `id, value, label, groupValue`
+**Payload:** `id, value, label, groupValue`
 
 **Input types affected:** `text`, `select-multiple`
 
@@ -731,7 +745,7 @@ example.passedElement.element.addEventListener(
 
 ### unhighlightItem
 
-**Arguments:** `id, value, label, groupValue`
+**Payload:** `id, value, label, groupValue`
 
 **Input types affected:** `text`, `select-multiple`
 
@@ -739,7 +753,7 @@ example.passedElement.element.addEventListener(
 
 ### choice
 
-**Arguments:** `choice`
+**Payload:** `choice`
 
 **Input types affected:** `select-one`, `select-multiple`
 
@@ -748,7 +762,7 @@ example.passedElement.element.addEventListener(
 
 ### change
 
-**Arguments:** `value`
+**Payload:** `value`
 
 **Input types affected:** `text`, `select-one`, `select-multiple`
 
@@ -756,7 +770,7 @@ example.passedElement.element.addEventListener(
 
 ### search
 
-**Arguments:** `value`, `resultCount`
+**Payload:** `value`, `resultCount`
 
 **Input types affected:** `select-one`, `select-multiple`
 
@@ -764,7 +778,7 @@ example.passedElement.element.addEventListener(
 
 ### showDropdown
 
-**Arguments:** -
+**Payload:** -
 
 **Input types affected:** `select-one`, `select-multiple`
 
@@ -772,7 +786,7 @@ example.passedElement.element.addEventListener(
 
 ### hideDropdown
 
-**Arguments:** -
+**Payload:** -
 
 **Input types affected:** `select-one`, `select-multiple`
 
@@ -780,7 +794,7 @@ example.passedElement.element.addEventListener(
 
 ### highlightChoice
 
-**Arguments:** `el`
+**Payload:** `el`
 
 **Input types affected:** `select-one`, `select-multiple`
 
@@ -1036,7 +1050,7 @@ example.setChoiceByValue('Two'); // Choice with value of 'Two' has now been sele
 
 ## Browser compatibility
 
-Choices is compiled using [Babel](https://babeljs.io/) targeting browsers [with more that 1% of global usage](https://github.com/jshjohnson/Choices/blob/master/.browserslistrc) and expecting that features [listed below](https://github.com/jshjohnson/Choices/blob/master/.eslintrc.json#L62) are available or polyfilled in browser.
+Choices is compiled using [Babel](https://babeljs.io/) targeting browsers [with more than 1% of global usage](https://github.com/jshjohnson/Choices/blob/master/.browserslistrc) and expecting that features [listed below](https://github.com/jshjohnson/Choices/blob/master/.eslintrc.json#L62) are available or polyfilled in browser.
 You may see exact list of target browsers by running `npx browserslist` withing this repository folder.
 If you need to support a browser that does not have one of the features listed below,
 I suggest including a polyfill from the very good [polyfill.io](https://polyfill.io/v3/):
@@ -1044,7 +1058,7 @@ I suggest including a polyfill from the very good [polyfill.io](https://polyfill
 **Polyfill example used for the demo:**
 
 ```html
-<script src="https://cdn.polyfill.io/v3/polyfill.min.js?features=es5,es6,fetch,Array.prototype.includes,CustomEvent,Element.prototype.closest"></script>
+<script src="https://cdn.polyfill.io/v3/polyfill.min.js?features=Array.from%2Ces5%2Ces6%2CSymbol%2CSymbol.iterator%2CDOMTokenList%2CObject.assign%2CCustomEvent%2CElement.prototype.classList%2CElement.prototype.closest%2CElement.prototype.dataset%2CArray.prototype.find%2CArray.prototype.includes"></script>
 ```
 
 **Features used in Choices:**
@@ -1055,10 +1069,12 @@ Array.prototype.find
 Array.prototype.includes
 Symbol
 Symbol.iterator
+DOMTokenList
 Object.assign
 CustomEvent
 Element.prototype.classList
 Element.prototype.closest
+Element.prototype.dataset
 ```
 
 ## Development
